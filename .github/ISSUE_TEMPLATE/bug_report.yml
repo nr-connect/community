@@ -1,0 +1,66 @@
+name: Bug Report
+description: Report a bug in @nr-connect/node-red, Dashboard 2.0 widgets, or the NR Connect Portal.
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug! **Never paste connection codes, API keys, or secrets** in public issues.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected Area
+      options:
+        - Node-RED Plugin (@nr-connect/node-red)
+        - Dashboard 2.0 Access & Widgets
+        - Push Notifications
+        - Remote Connector
+        - NR Connect Portal
+        - Documentation
+    validations:
+      required: true
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Deployment Environment
+      options:
+        - Linux (Bare Metal / VM / Raspberry Pi)
+        - Docker / Docker Compose
+        - LXC (Proxmox / LXD / Incus)
+        - Windows / macOS
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Node-RED Diagnostics (redacted)
+      description: In Node-RED, open the **NR Connect** sidebar and click **Copy diagnostics**, then paste the JSON block here.
+      placeholder: |
+        {
+          "pluginVersion": "0.1.0",
+          "nodeVersion": "v22.x",
+          "platform": "linux"
+        }
+      render: json
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe the bug and what you expected to happen instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Minimal steps to reproduce the issue.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs (optional)
+      description: Paste any relevant `[NR Connect]` Node-RED log lines (redacting any private hostnames or secrets).
+      render: shell

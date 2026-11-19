@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" fill="#FFFFFF" />
+  <g transform="translate(56 56) scale(6.25)">
+    <path
+      d="M32 2.5 57 10.8V30C57 45.5 46.5 55.5 32 61.5 17.5 55.5 7 45.5 7 30V10.8Z"
+      fill="#8F0000"
+    />
+    <path
+      d="M32 6.8 52.5 13.6V30C52.5 43 44 51.5 32 56.8 20 51.5 11.5 43 11.5 30V13.6Z"
+      fill="#7A0000"
+    />
+    <path
+      d="M11.5 23V30C11.5 43 20 51.5 32 56.8Z"
+      fill="#5E0000"
+    />
+    <path
+      d="M32 6.8 52.5 13.6V30C52.5 43 44 51.5 32 56.8 20 51.5 11.5 43 11.5 30V13.6Z"
+      fill="none"
+      stroke="#FFFFFF"
+      stroke-width="1.8"
+      stroke-linejoin="round"
+    />
+    <path
+      d="M23 24C29 24 27 17.5 33 17.5M23 24C31 24 33 29.5 40 29.5"
+      fill="none"
+      stroke="#FFFFFF"
+      stroke-width="2.4"
+      stroke-linecap="round"
+    />
+    <g fill="#8F0000" stroke="#FFFFFF" stroke-width="2.4">
+      <rect x="11.5" y="21" width="11.5" height="6" rx="3" />
+      <rect x="33" y="14.5" width="15" height="6" rx="3" />
+      <rect x="40" y="26.5" width="9.5" height="6" rx="3" />
+    </g>
+    <g stroke="#FFFFFF" stroke-width="1.8">
+      <rect x="22.5" y="40.5" width="5.5" height="7" rx="1.6" fill="#1FB872" />
+      <rect x="29.5" y="34" width="6.5" height="19" rx="1.6" fill="#F59A1B" />
+      <rect x="37.5" y="39.5" width="5.5" height="8" rx="1.6" fill="#3B3FC4" />
+    </g>
+  </g>
+</svg>

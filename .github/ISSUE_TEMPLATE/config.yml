@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Troubleshooting & Docs
+    url: https://nr-connect.com/docs/troubleshooting
+    about: Check Docker networking, Local network lockdown recovery, clock drift, and connector update guides.
+  - name: Q&A and Community Discussions
+    url: https://github.com/nr-connect/community/discussions
+    about: Ask setup questions, share Dashboard 2.0 patterns, and discuss ideas.
+  - name: Private Account, Billing, or Security Support
+    url: https://nr-connect.com/support
+    about: Contact us privately from the NR Connect Portal (auto-attaches instance telemetry).
+  - name: System Status
+    url: https://status.nr-connect.com
+    about: Check live uptime and incidents before reporting an outage.
