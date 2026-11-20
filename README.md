@@ -13,7 +13,7 @@ Welcome to the public issue tracker and community hub for **NR Connect** (`@nr-c
 - **Documentation & Troubleshooting:** https://nr-connect.com/docs/troubleshooting
 - **Bug Reports:** [Open an issue](./issues/new/choose)
 - **Questions, Tips & Show-and-Tell:** [GitHub Discussions](./discussions)
-- **Real-Time Chat:** Join our Discord community (link on https://nr-connect.com/support)
+- **Real-Time Chat:** [Join our Discord community](https://discord.gg/qZxXeCyahw)
 - **System Status:** https://status.nr-connect.com
 - **Private Account, Billing, or Security Issues:** https://nr-connect.com/support or `support@nr-connect.com`
 
