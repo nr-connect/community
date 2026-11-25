@@ -6,10 +6,11 @@
 
 Welcome to the public issue tracker and community hub for **NR Connect** (`@nr-connect/node-red` and the NR Connect control portal).
 
-> **Note:** This repository hosts public bug reports, feature requests, release notes, and Q&A discussions. Source code is maintained privately.
+> **Note:** This repository hosts public bug reports, feature requests, release notes, Q&A discussions, and the auditable [`Dockerfile`](./docker/Dockerfile) + GitHub Actions workflow for [`ghcr.io/nr-connect/node-red`](./docker/README.md). Control-plane source code is maintained privately.
 
 ## Where to Go
 
+- **Official Docker Image & Provenance:** [`docker/`](./docker/README.md) (`ghcr.io/nr-connect/node-red`)
 - **Documentation & Troubleshooting:** https://nr-connect.com/docs/troubleshooting
 - **Bug Reports:** [Open an issue](./issues/new/choose)
 - **Questions, Tips & Show-and-Tell:** [GitHub Discussions](./discussions)

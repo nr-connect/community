@@ -1,0 +1,158 @@
+name: Publish Docker Image
+
+on:
+  schedule:
+    # Check daily at 06:00 UTC for new nodered/node-red:latest or @nr-connect/node-red releases
+    - cron: "0 6 * * *"
+  repository_dispatch:
+    types: [plugin-released]
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Rebuild even if base image and plugin versions are unchanged"
+        type: boolean
+        default: true
+      node_red_version:
+        description: "Base nodered/node-red tag to build from"
+        type: string
+        default: "latest"
+      plugin_version:
+        description: "@nr-connect/node-red npm version to install (defaults to latest on npm)"
+        type: string
+        default: ""
+
+concurrency:
+  group: publish-docker
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+      security-events: write
+    env:
+      DOCKER_IMAGE: ghcr.io/nr-connect/node-red
+      NODE_RED_VERSION: ${{ inputs.node_red_version || 'latest' }}
+
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check for upstream Node-RED or npm plugin update
+        id: check
+        run: |
+          if [ -n "${{ inputs.plugin_version }}" ]; then
+            PLUGIN_VERSION="${{ inputs.plugin_version }}"
+          elif [ -n "${{ github.event.client_payload.plugin_version }}" ]; then
+            PLUGIN_VERSION="${{ github.event.client_payload.plugin_version }}"
+          else
+            PLUGIN_VERSION=$(npm view @nr-connect/node-red version)
+          fi
+
+          if [ -z "${PLUGIN_VERSION}" ]; then
+            echo "::error::Could not resolve @nr-connect/node-red version from npm."
+            exit 1
+          fi
+
+          UPSTREAM_DIGEST=$(docker buildx imagetools inspect "docker.io/nodered/node-red:${NODE_RED_VERSION}" --format '{{.Manifest.Digest}}')
+
+          CURRENT_META=$(
+            docker buildx imagetools inspect "${DOCKER_IMAGE}:latest" --format '{{json .Image}}' 2>/dev/null || true
+          )
+          CURRENT_DIGEST=$(echo "${CURRENT_META}" | jq -r '.["linux/amd64"].config.Labels["org.opencontainers.image.base.digest"] // empty' 2>/dev/null || true)
+          CURRENT_PLUGIN=$(echo "${CURRENT_META}" | jq -r '.["linux/amd64"].config.Labels["org.opencontainers.image.version"] // empty' 2>/dev/null || true)
+
+          echo "plugin_version=${PLUGIN_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "upstream_digest=${UPSTREAM_DIGEST}" >> "$GITHUB_OUTPUT"
+          echo "Resolved @nr-connect/node-red version: ${PLUGIN_VERSION} (published: ${CURRENT_PLUGIN:-<none>})"
+          echo "Upstream nodered/node-red:${NODE_RED_VERSION} digest: ${UPSTREAM_DIGEST}"
+          echo "Published image base digest: ${CURRENT_DIGEST:-<none>}"
+
+          TAGS="${DOCKER_IMAGE}:latest,${DOCKER_IMAGE}:${PLUGIN_VERSION}"
+          if [[ "${PLUGIN_VERSION}" =~ ^([0-9]+\.[0-9]+)\.[0-9]+$ ]]; then
+            TAGS="${TAGS},${DOCKER_IMAGE}:${BASH_REMATCH[1]}"
+          fi
+          echo "tags=${TAGS}" >> "$GITHUB_OUTPUT"
+
+          SHOULD_BUILD="false"
+          if [ "${{ github.event_name }}" != "schedule" ]; then
+            if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.force }}" != "true" ]; then
+              if [ "${UPSTREAM_DIGEST}" != "${CURRENT_DIGEST}" ] || [ "${PLUGIN_VERSION}" != "${CURRENT_PLUGIN}" ]; then
+                SHOULD_BUILD="true"
+              fi
+            else
+              SHOULD_BUILD="true"
+            fi
+          elif [ "${UPSTREAM_DIGEST}" != "${CURRENT_DIGEST}" ] || [ "${PLUGIN_VERSION}" != "${CURRENT_PLUGIN}" ]; then
+            SHOULD_BUILD="true"
+          fi
+
+          echo "should_build=${SHOULD_BUILD}" >> "$GITHUB_OUTPUT"
+          echo "Should build: ${SHOULD_BUILD}"
+
+      - name: Checkout repository
+        if: steps.check.outputs.should_build == 'true'
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        if: steps.check.outputs.should_build == 'true'
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        if: steps.check.outputs.should_build == 'true'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push multi-arch Docker image
+        id: build
+        if: steps.check.outputs.should_build == 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: docker
+          file: docker/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          provenance: mode=max
+          sbom: true
+          build-args: |
+            NODE_RED_VERSION=${{ env.NODE_RED_VERSION }}
+            PLUGIN_VERSION=${{ steps.check.outputs.plugin_version }}
+          tags: ${{ steps.check.outputs.tags }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/nr-connect/community
+            org.opencontainers.image.version=${{ steps.check.outputs.plugin_version }}
+            org.opencontainers.image.base.name=docker.io/nodered/node-red:${{ env.NODE_RED_VERSION }}
+            org.opencontainers.image.base.digest=${{ steps.check.outputs.upstream_digest }}
+
+      - name: Attest build provenance
+        if: steps.check.outputs.should_build == 'true'
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ${{ env.DOCKER_IMAGE }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true
+
+      - name: Scan published image for vulnerabilities (Trivy)
+        if: steps.check.outputs.should_build == 'true'
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: "${{ env.DOCKER_IMAGE }}@${{ steps.build.outputs.digest }}"
+          format: "sarif"
+          output: "trivy-results.sarif"
+          exit-code: "0"
+          ignore-unfixed: true
+          vuln-type: "os,library"
+          severity: "CRITICAL,HIGH"
+
+      - name: Upload Trivy SARIF to GitHub Security
+        if: steps.check.outputs.should_build == 'true'
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: "trivy-results.sarif"
